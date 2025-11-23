@@ -33,11 +33,11 @@ public class App {
                 switch (choice) {
                     case "1" -> {
                         String name = ch.readNonEmpty("Имя: ");
-                        String email = ch.readNonEmpty("Email: ");
-                        int age = ch.readInt("Возраст", 0);
+                        String email = ch.readEmail("Email: ");
+                        int age = ch.readAge("Возраст: ");
                         User user = new User(null, name, email, age, Instant.now());
                         Long id = dao.create(user);
-                        System.out.println("Создан пользователь с id=" + id);
+                        System.out.println("Created user id=" + id);
                     }
                     case "2" -> {
                         List<User> all = dao.findAll();
@@ -49,23 +49,30 @@ public class App {
                         System.out.println(u.map(Object::toString).orElse("Пользователь с таким id не найден."));
                     }
                     case "4" -> {
-                        Long id = ch.readLong("Введите id пользователя, данные которого нужно изменить: ");
+                        Long id = ch.readLong("Введите id пользователя, данные которого нужно изменить, Enter - чтобы оставить значение поля старым: ");
                         Optional<User> maybe = dao.findById(id);
                         if (maybe.isEmpty()) {
-                            System.out.println("Пользователь с таким id не найден.");
+                            System.out.println("User not found");
                             break;
                         }
                         User u = maybe.get();
-                        System.out.println("Текущие данные: " + u);
+
+                        // Выводим текущие данные в stderr (чтобы не перепуталось с подсказкой)
+                        System.err.println("Текущие данные: " + u);
+
                         String newName = ch.readLine("Новое имя: ");
                         if (!newName.isBlank()) u.setName(newName);
-                        String newEmail = ch.readLine("Новый email: ");
-                        if (!newEmail.isBlank()) u.setEmail(newEmail);
-                        String ageStr = ch.readLine("Новый возраст: ");
-                        if (!ageStr.isBlank()) u.setAge(Integer.parseInt(ageStr));
+
+                        String newEmail = ch.readOptionalEmail("Новый email: ");
+                        if (newEmail != null) u.setEmail(newEmail);
+
+                        Integer newAge = ch.readOptionalAge("Новый возраст: ");
+                        if (newAge != null) u.setAge(newAge);
+
                         dao.update(u);
                         System.out.println("Данные обновлены.");
                     }
+
                     case "5" -> {
                         Long idToDelete = ch.readLong("Введите id пользователя, которого нужно удалить: ");
                         boolean wasDeleted = dao.delete(idToDelete);
