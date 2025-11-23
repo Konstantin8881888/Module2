@@ -14,8 +14,9 @@
         <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
 
         <!-- show SQL -->
-        <property name="hibernate.show_sql">true</property>
-        <property name="hibernate.format_sql">true</property>
+        <!-- Выключаем, чтобы не печатать SQL через Hibernate.-->
+        <property name="hibernate.show_sql">false</property>
+        <property name="hibernate.format_sql">false</property>
 
         <!-- Schema auto-update -->
         <property name="hibernate.hbm2ddl.auto">update</property>
