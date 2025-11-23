@@ -1,11 +1,13 @@
 package org.klimtsov;
 
+import lombok.Getter;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.klimtsov.userservice.model.User;
 
 public class HibernateUtil {
-    private static SessionFactory sessionFactory;
+    @Getter
+    private static final SessionFactory sessionFactory;
 
     static {
         try {
@@ -17,10 +19,6 @@ public class HibernateUtil {
             e.printStackTrace();
             throw new ExceptionInInitializerError("Initial SessionFactory creation failed" + e);
         }
-    }
-
-    public static SessionFactory getSessionFactory() {
-        return sessionFactory;
     }
 
     public static void shutdown() {
