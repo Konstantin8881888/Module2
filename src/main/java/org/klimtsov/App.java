@@ -51,6 +51,7 @@ public class App {
                         List<User> all = dao.findAll();
                         logger.info("Найдено пользователей: {}", all.size());
                         logger.debug("Список пользователей: {}", all);
+                        try { Thread.sleep(100); } catch (InterruptedException ignored) {}
                         all.forEach(System.out::println);
                     }
                     case "3" -> {

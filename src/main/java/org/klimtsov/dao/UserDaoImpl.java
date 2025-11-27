@@ -21,7 +21,7 @@ public class UserDaoImpl implements UserDao {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            logger.debug("Начало транзакции для создания пользователя: email={}", user.getEmail());
+            logger.info("Начало транзакции для создания пользователя: email={}", user.getEmail());
 
             session.persist(user);
             session.flush();
