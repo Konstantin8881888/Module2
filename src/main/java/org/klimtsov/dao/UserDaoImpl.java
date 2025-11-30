@@ -2,6 +2,7 @@ package org.klimtsov.dao;
 
 import jakarta.persistence.PersistenceException;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.exception.SQLGrammarException;
 import org.klimtsov.HibernateUtil;
@@ -15,11 +16,23 @@ import java.util.Optional;
 public class UserDaoImpl implements UserDao {
     private static final Logger logger = LoggerFactory.getLogger(UserDaoImpl.class);
 
+    private final SessionFactory sessionFactory;
+
+    //Конструктор по умолчанию для основного приложения.
+    public UserDaoImpl() {
+        this.sessionFactory = HibernateUtil.getSessionFactory();
+    }
+
+    //Конструктор для тестов, принимающий SessionFactory.
+    public UserDaoImpl(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
     @Override
     public Long create(User user) {
         logger.info("Создание пользователя: email={}", user.getEmail());
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             transaction = session.beginTransaction();
             logger.debug("Начало транзакции для создания пользователя: email={}", user.getEmail());
 
@@ -48,7 +61,7 @@ public class UserDaoImpl implements UserDao {
     @Override
     public Optional<User> findById(Long id) {
         logger.info("Поиск пользователя по id: {}", id);
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             User user = session.get(User.class, id);
             if (user != null) {
                 logger.info("Пользователь найден: id={}, email={}", id, user.getEmail());
@@ -72,7 +85,7 @@ public class UserDaoImpl implements UserDao {
     @Override
     public List<User> findAll() {
         logger.info("Запрос всех пользователей");
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             List<User> list = session.createQuery("from org.klimtsov.userservice.model.User u order by u.id", User.class).list();
             logger.info("Найдено пользователей: {}", list.size());
             logger.debug("Список всех пользователей: {}", list);
@@ -94,7 +107,7 @@ public class UserDaoImpl implements UserDao {
         logger.info("Обновление пользователя: id={}, email={}", user.getId(), user.getEmail());
         logger.debug("Новые данные для обновления: {}", user);
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             transaction = session.beginTransaction();
             logger.debug("Начало транзакции для обновления пользователя: id={}", user.getId());
 
@@ -122,7 +135,7 @@ public class UserDaoImpl implements UserDao {
     public boolean delete(Long id) {
         logger.info("Удаление пользователя: id={}", id);
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             transaction = session.beginTransaction();
             logger.debug("Начало транзакции для удаления пользователя: id={}", id);
 

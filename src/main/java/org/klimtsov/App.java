@@ -3,6 +3,7 @@ package org.klimtsov;
 import org.klimtsov.console.ConsoleHelper;
 import org.klimtsov.dao.UserDao;
 import org.klimtsov.dao.UserDaoImpl;
+import org.klimtsov.service.UserService;
 import org.klimtsov.userservice.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ public class App {
         logger.info("Запуск пользовательского сервиса");
         ConsoleHelper ch = new ConsoleHelper();
         UserDao dao = new UserDaoImpl();
+        UserService userService = new UserService(dao);
 
         mainLoop:
         while (true) {
@@ -29,6 +31,7 @@ public class App {
             System.out.println("5) Удалить пользователя.");
             System.out.println("6) Выход.");
             try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+
             String choice = ch.readLine("\nВыберите пункт: ");
             logger.debug("Пользователь выбрал пункт меню: {}", choice);
 
@@ -42,13 +45,14 @@ public class App {
                         int age = ch.readAge("Возраст: ");
                         logger.debug("Введены данные: name={}, email={}, age={}", name, email, age);
                         User user = new User(null, name, email, age, Instant.now());
-                        Long id = dao.create(user);
+                        Long id = userService.createUser(user);
                         logger.info("Пользователь создан успешно: id={}", id);
                         System.out.println("Created user id=" + id);
                     }
                     case "2" -> {
                         logger.info("Запрос списка всех пользователей");
-                        List<User> all = dao.findAll();
+                        List<User> all = userService.getAllUsers();
+                        try { Thread.sleep(100); } catch (InterruptedException ignored) {}
                         logger.info("Найдено пользователей: {}", all.size());
                         logger.debug("Список пользователей: {}", all);
                         all.forEach(System.out::println);
@@ -56,7 +60,7 @@ public class App {
                     case "3" -> {
                         Long id = ch.readLong("Введите id: ");
                         logger.info("Поиск пользователя по id: {}", id);
-                        Optional<User> u = dao.findById(id);
+                        Optional<User> u = userService.getUserById(id);
                         if (u.isPresent()) {
                             logger.info("Пользователь найден: id={}, email={}", id, u.get().getEmail());
                             System.out.println(u.get());
@@ -68,7 +72,7 @@ public class App {
                     case "4" -> {
                         Long id = ch.readLong("Введите id пользователя, данные которого нужно изменить: ");
                         logger.info("Начало обновления пользователя: id={}", id);
-                        Optional<User> maybe = dao.findById(id);
+                        Optional<User> maybe = userService.getUserById(id);
                         if (maybe.isEmpty()) {
                             logger.warn("Пользователь для обновления не найден: id={}", id);
                             System.out.println("User not found");
@@ -77,9 +81,9 @@ public class App {
                         User u = maybe.get();
                         logger.debug("Текущие данные пользователя: {}", u);
 
-                        System.err.println("Текущие данные: " + u);
-
+                        System.out.println("Текущие данные: " + u);
                         try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+
                         String newName = ch.readLine("Новое имя: ");
                         if (!newName.isBlank()) {
                             logger.debug("Изменение имени с '{}' на '{}'", u.getName(), newName);
@@ -98,14 +102,14 @@ public class App {
                             u.setAge(newAge);
                         }
 
-                        dao.update(u);
+                        userService.updateUser(u);
                         logger.info("Пользователь обновлен успешно: id={}", id);
                         System.out.println("Данные обновлены.");
                     }
                     case "5" -> {
                         Long idToDelete = ch.readLong("Введите id пользователя, которого нужно удалить: ");
                         logger.info("Попытка удаления пользователя: id={}", idToDelete);
-                        boolean wasDeleted = dao.delete(idToDelete);
+                        boolean wasDeleted = userService.deleteUser(idToDelete);
                         if (wasDeleted) {
                             logger.info("Пользователь удален успешно: id={}", idToDelete);
                             System.out.println("Пользователь с id=" + idToDelete + " был удалён.");
