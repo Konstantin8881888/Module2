@@ -1,58 +1,87 @@
 package org.klimtsov.service;
 
-import org.klimtsov.dao.UserDao;
+import lombok.RequiredArgsConstructor;
+import org.klimtsov.dto.UserRequest;
+import org.klimtsov.dto.UserResponse;
+import org.klimtsov.repository.UserRepository;
 import org.klimtsov.userservice.model.User;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
+@Service
+@RequiredArgsConstructor
 public class UserService {
-    private final UserDao userDao;
 
-    public UserService(UserDao userDao) {
-        this.userDao = userDao;
+    private final UserRepository userRepository;
+
+    @Transactional
+    public UserResponse createUser(UserRequest userRequest) {
+        //Проверяем, существует ли email.
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new IllegalArgumentException("Пользователь с таким email уже существует!");
+        }
+
+        User user = new User();
+        user.setName(userRequest.getName());
+        user.setEmail(userRequest.getEmail());
+        user.setAge(userRequest.getAge());
+        user.setCreatedAt(Instant.now());
+
+        User savedUser = userRepository.save(user);
+        return convertToResponse(savedUser);
     }
 
-    public Long createUser(User user) {
-        validateUser(user);
-        return userDao.create(user);
+    public UserResponse getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден с id: " + id));
+        return convertToResponse(user);
     }
 
-    public List<User> getAllUsers() {
-        return userDao.findAll();
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public Optional<User> getUserById(Long id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID must be positive");
+    @Transactional
+    public UserResponse updateUser(Long id, UserRequest userRequest) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден с id: " + id));
+
+        //Проверяем, что email не занят.
+        if (!user.getEmail().equals(userRequest.getEmail()) &&
+                userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new IllegalArgumentException("Email уже занят другим пользователем!");
         }
-        return userDao.findById(id);
+
+        user.setName(userRequest.getName());
+        user.setEmail(userRequest.getEmail());
+        user.setAge(userRequest.getAge());
+
+        User updatedUser = userRepository.save(user);
+        return convertToResponse(updatedUser);
     }
 
-    public void updateUser(User user) {
-        if (user.getId() == null || user.getId() <= 0) {
-            throw new IllegalArgumentException("User ID must be positive for update");
+    @Transactional
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new IllegalArgumentException("Пользователь не найден с id: " + id);
         }
-        validateUser(user);
-        userDao.update(user);
+        userRepository.deleteById(id);
     }
 
-    public boolean deleteUser(Long id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID must be positive");
-        }
-        return userDao.delete(id);
-    }
-
-    private void validateUser(User user) {
-        if (user.getName() == null || user.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("User name cannot be empty");
-        }
-        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("User email cannot be empty");
-        }
-        if (user.getAge() != null && (user.getAge() < 0 || user.getAge() > 120)) {
-            throw new IllegalArgumentException("Age must be between 0 and 120");
-        }
+    //Переводим User в UserResponse
+    private UserResponse convertToResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getAge(),
+                user.getCreatedAt()
+        );
     }
 }
