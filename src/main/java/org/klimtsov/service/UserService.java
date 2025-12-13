@@ -1,8 +1,10 @@
 package org.klimtsov.service;
 
 import lombok.RequiredArgsConstructor;
+import org.klimtsov.dto.UserEvent;
 import org.klimtsov.dto.UserRequest;
 import org.klimtsov.dto.UserResponse;
+import org.klimtsov.kafka.KafkaProducer;
 import org.klimtsov.repository.UserRepository;
 import org.klimtsov.userservice.model.User;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final KafkaProducer kafkaProducer;
 
     @Transactional
     public UserResponse createUser(UserRequest userRequest) {
@@ -32,6 +35,8 @@ public class UserService {
         user.setCreatedAt(Instant.now());
 
         User savedUser = userRepository.save(user);
+        UserEvent event = new UserEvent(savedUser.getEmail(), "CREATE");
+        kafkaProducer.sendUserEvent(event);
         return convertToResponse(savedUser);
     }
 
@@ -68,9 +73,12 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("Пользователь не найден с id: " + id);
-        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден с id: " + id));
+
+        UserEvent event = new UserEvent(user.getEmail(), "DELETE");
+        kafkaProducer.sendUserEvent(event);
+
         userRepository.deleteById(id);
     }
 
