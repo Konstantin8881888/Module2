@@ -6,6 +6,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,16 @@ public class GlobalExceptionHandler {
             }
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    //Обработка ошибок типа параметра (в URL строка вместо числа).
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Некорректный формат параметра!");
+        error.put("message", String.format("Параметр '%s' должен быть числом!", ex.getName()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     //Обработка IllegalArgumentException.

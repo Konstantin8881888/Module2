@@ -6,6 +6,7 @@ import org.klimtsov.dto.UserRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -370,4 +371,40 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest()); //Должна быть ошибка валидации.
     }
 
+    @Test
+    void queryWithInvalidSQL_ReturnsInternalServerError() throws Exception {
+        //Обработка RuntimeException, которые могут включать SQLGrammarException.
+        UserRequest validUser = new UserRequest();
+        validUser.setName("Тест");
+        validUser.setEmail("test@example.com");
+        validUser.setAge(25);
+
+        //Обычный запрос.
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validUser)))
+                .andExpect(status().isCreated());
+
+        //Несуществующий путь.
+        mockMvc.perform(get("/api/users/invalid-path"))
+                .andExpect(status().isBadRequest()); //Должен вернуть 400, а не 500.
+    }
+
+    @Test
+    void createUser_WithNullValues_ReturnsBadRequest() throws Exception {
+        String invalidJson = """
+        {
+            "name": null,
+            "email": null,
+            "age": null
+        }
+        """;
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.name").exists())
+                .andExpect(jsonPath("$.email").exists());
+    }
 }

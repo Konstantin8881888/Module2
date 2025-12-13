@@ -9,6 +9,7 @@ import org.klimtsov.userservice.model.User;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -215,6 +216,31 @@ class UserServiceTest {
 
         assertNotNull(response);
         assertNull(response.getAge());
+    }
+
+    @Test
+    void createUser_WhenDatabaseConstraintViolation_ThrowsDataIntegrityViolationException() {
+        UserRequest request = new UserRequest();
+        request.setName("Иван Иванов");
+        request.setEmail("test@example.com");
+        request.setAge(25);
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+
+        //При сохранении произойдёт ошибка ограничения БД на длинное имя.
+        when(userRepository.save(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException("Ошибка ограничения базы данных"));
+
+        DataIntegrityViolationException exception = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> userService.createUser(request)
+        );
+
+        assertNotNull(exception);
+        assertTrue(exception.getMessage().contains("Ошибка ограничения базы данных"));
+
+        verify(userRepository, times(1)).existsByEmail(request.getEmail());
+        verify(userRepository, times(1)).save(any(User.class));
     }
 
     @Test
