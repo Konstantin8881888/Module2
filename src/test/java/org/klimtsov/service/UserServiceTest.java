@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.klimtsov.dto.UserRequest;
 import org.klimtsov.dto.UserResponse;
+import org.klimtsov.kafka.KafkaProducer;
 import org.klimtsov.repository.UserRepository;
 import org.klimtsov.userservice.model.User;
 import org.mockito.InjectMocks;
@@ -25,6 +26,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private KafkaProducer kafkaProducer;
 
     @InjectMocks
     private UserService userService;
@@ -56,6 +60,7 @@ class UserServiceTest {
 
         verify(userRepository, times(1)).existsByEmail(request.getEmail());
         verify(userRepository, times(1)).save(any(User.class));
+        verify(kafkaProducer, times(1)).sendUserEvent(any());
     }
 
     @Test
@@ -74,6 +79,7 @@ class UserServiceTest {
 
         assertEquals("Пользователь с таким email уже существует!", exception.getMessage());
         verify(userRepository, never()).save(any(User.class));
+        verify(kafkaProducer, never()).sendUserEvent(any());
     }
 
     @Test
@@ -156,18 +162,23 @@ class UserServiceTest {
         verify(userRepository, times(1)).findById(userId);
         verify(userRepository, times(1)).existsByEmail(updateRequest.getEmail());
         verify(userRepository, times(1)).save(any(User.class));
+        verify(kafkaProducer, never()).sendUserEvent(any());
     }
 
     @Test
     void deleteUser_ExistingUser_DeletesUser() {
         Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setEmail("test@example.com");
 
-        when(userRepository.existsById(userId)).thenReturn(true);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         userService.deleteUser(userId);
 
-        verify(userRepository, times(1)).existsById(userId);
+        verify(userRepository, times(1)).findById(userId);
         verify(userRepository, times(1)).deleteById(userId);
+        verify(kafkaProducer, times(1)).sendUserEvent(any());
     }
 
     @Test
@@ -216,6 +227,8 @@ class UserServiceTest {
 
         assertNotNull(response);
         assertNull(response.getAge());
+
+        verify(kafkaProducer, times(1)).sendUserEvent(any());
     }
 
     @Test
