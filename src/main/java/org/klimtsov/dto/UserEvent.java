@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserEvent {
     private String email;
-    private String operation; // "CREATE" или "DELETE"
+    private String operation;
 }

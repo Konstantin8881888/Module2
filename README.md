@@ -1,47 +1,32 @@
-### ****Spring Boot приложение для управления пользователями с использованием Spring Data JPA и PostgreSQL.****
+### Spring Boot приложение для управления пользователями с использованием Spring Data JPA, PostgreSQL и Kafka.
 
-Приложение представляет собой полноценное Spring-приложение, реализующее REST API для выполнения базовых операций CRUD (Create, Read, Update, Delete) над сущностью User.
+Приложение представляет собой полноценный микросервис (user-service), реализующий REST API для выполнения базовых операций CRUD (Create, Read, Update, Delete) над сущностью User и отправляющий события о действиях в Kafka.
 
 ### Особенности:
 
 - Spring Boot Auto-Configuration - автоматическая настройка компонентов
-
 - Spring Data JPA Repository
-
 - Spring REST Controllers с аннотациями @RestController, @RequestMapping
-
 - Spring Dependency Injection через @Autowired и конструкторы
-
 - Spring Validation с аннотациями @Valid, @Email, @Min, @Max, @NotBlank
-
 - Spring Transaction Management через @Transactional
-
 - Spring Exception Handling через @RestControllerAdvice
-
 - Spring Test Framework для тестирования
+- Apache Kafka - для отправки событий о создании и удалении пользователей
 
 ### Основные технологии:
 
 - Java 17 - язык программирования
-
-- Spring Boot 3.2.0 - основной фреймворк
-
+- Spring Boot 3.5.8 - основной фреймворк
 - Spring Web - для создания REST API
-
 - Spring Data JPA - для работы с базой данных
-
 - Spring Validation - для валидации входных данных
-
 - Spring Transactions - для управления транзакциями
-
+- Spring for Apache Kafka - для асинхронной отправки событий
 - PostgreSQL - система управления базами данных
-
 - Lombok - для сокращения шаблонного кода
-
 - Testcontainers - для интеграционного тестирования с PostgreSQL
-
 - Mockito - для модульного тестирования
-
 - Maven - для управления зависимостями и сборки
 
 ---
@@ -51,14 +36,20 @@
 ### Поля сущности User:
 
 - id (Long) - уникальный идентификатор
-
 - name (String) - имя пользователя (обязательное)
-
 - email (String) - email пользователя (обязательное, уникальное)
-
 - age (Integer) - возраст пользователя (0-120, необязательное)
-
 - createdAt (Instant) - дата и время создания записи
+
+---
+
+## Архитектура и интеграция
+
+Приложение отправляет события в Apache Kafka при создании или удалении пользователя. Эти события потребляются вторым микросервисом (notification-service) для отправки email-уведомлений.
+
+### Отправляемые события Kafka:
+- **Топик:** `user-events`
+- **Содержимое:** email пользователя и тип операции (`CREATE` или `DELETE`)
 
 ---
 
@@ -67,18 +58,13 @@
 ### Проект включает два типа тестов:
 
 1. Интеграционные тесты (UserControllerTest)
-   
-   - Используют Testcontainers для запуска PostgreSQL в Docker
-
-   - Тестируют весь стек приложения через MockMvc
-
-   - Каждый тест выполняется в транзакции с автоматическим откатом
+    - Используют Testcontainers для запуска PostgreSQL в Docker
+    - Тестируют весь стек приложения через MockMvc
+    - Каждый тест выполняется в транзакции с автоматическим откатом
 
 2. Модульные тесты (UserServiceTest, GlobalExceptionHandlerTest)
-
-   - Используют Mockito для изоляции тестируемых компонентов
-
-   - Тестируют бизнес-логику и обработку исключений
+    - Используют Mockito для изоляции тестируемых компонентов
+    - Тестируют бизнес-логику и обработку исключений
 
 ---
 
