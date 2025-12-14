@@ -20,13 +20,15 @@ public class KafkaProducer {
         log.info("Отправляю событие в Kafka: {}", userEvent);
 
         try {
+            //Используем email в качестве ключа.
             CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(TOPIC, userEvent);
+                    kafkaTemplate.send(TOPIC, userEvent.getEmail(), userEvent);
 
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
-                    log.info("✅ Событие отправлено в Kafka. Топик: {}, offset: {}",
-                            TOPIC, result.getRecordMetadata().offset());
+                    log.info("✅ Событие отправлено в Kafka. Топик: {}, Партиция: {}, Оффсет: {}",
+                            TOPIC, result.getRecordMetadata().partition(),
+                            result.getRecordMetadata().offset());
                 } else {
                     log.error("❌ Ошибка отправки в Kafka: {}", ex.getMessage());
                 }
