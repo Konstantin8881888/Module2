@@ -1,8 +1,7 @@
 package org.klimtsov.builder;
 
 import org.klimtsov.controller.UserController;
-import org.klimtsov.dto.UserRequest;
-import org.klimtsov.dto.UserResponse;
+import org.klimtsov.dto.*;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.stereotype.Component;
@@ -48,7 +47,7 @@ public class UserLinkBuilder {
         return EntityModel.of(user, links);
     }
 
-    //EntityModel для пользователя с кастомным набором ссылок
+    //EntityModel для пользователя с кастомным набором ссылок.
     public EntityModel<UserResponse> toModel(UserResponse user, Link... additionalLinks) {
         EntityModel<UserResponse> model = toModel(user, false);
         if (additionalLinks != null) {
@@ -96,5 +95,51 @@ public class UserLinkBuilder {
                 .createUser(EMPTY_REQUEST))
                 .withRel("create-user")
                 .withType("POST");
+    }
+
+    public UserResponseWithLinks toUserResponseWithLinks(UserResponse user, boolean includeActionLinks) {
+        UserResponseWithLinks response = new UserResponseWithLinks();
+        response.setId(user.getId());
+        response.setName(user.getName());
+        response.setEmail(user.getEmail());
+        response.setAge(user.getAge());
+        response.setCreatedAt(user.getCreatedAt());
+
+        UserLinks links = buildUserLinks(user, includeActionLinks);
+        response.setLinks(links);
+
+        return response;
+    }
+
+    public UsersCollectionResponse.Link createLink(Link springLink) {
+        UsersCollectionResponse.Link link = new UsersCollectionResponse.Link();
+        link.setHref(springLink.getHref().toString());
+        link.setTemplated(springLink.isTemplated());
+
+        link.setName(springLink.getRel().value());
+
+        return link;
+    }
+
+    public UserLinks buildUserLinks(UserResponse user, boolean includeActionLinks) {
+        UserLinks userLinks = new UserLinks();
+
+        userLinks.setSelf(convertToDtoLink(getUserSelfLink(user.getId())));
+        userLinks.setAllUsers(convertToDtoLink(getAllUsersLink()));
+
+        if (includeActionLinks) {
+            userLinks.setUpdate(convertToDtoLink(getUpdateLink(user.getId())));
+            userLinks.setDelete(convertToDtoLink(getDeleteLink(user.getId())));
+        }
+
+        return userLinks;
+    }
+
+    public UsersCollectionResponse.Link convertToDtoLink(org.springframework.hateoas.Link springLink) {
+        UsersCollectionResponse.Link dtoLink = new UsersCollectionResponse.Link();
+        dtoLink.setHref(springLink.getHref().toString());
+        dtoLink.setTemplated(springLink.isTemplated());
+        dtoLink.setName(springLink.getRel().value());
+        return dtoLink;
     }
 }

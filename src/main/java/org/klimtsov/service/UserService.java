@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.klimtsov.dto.UserEvent;
 import org.klimtsov.dto.UserRequest;
 import org.klimtsov.dto.UserResponse;
+import org.klimtsov.exception.UserAlreadyExistsException;
+import org.klimtsov.exception.UserNotFoundException;
 import org.klimtsov.kafka.KafkaProducer;
 import org.klimtsov.repository.UserRepository;
 import org.klimtsov.userservice.model.User;
@@ -25,7 +27,7 @@ public class UserService {
     public UserResponse createUser(UserRequest userRequest) {
         //Проверяем, существует ли email.
         if (userRepository.existsByEmail(userRequest.getEmail())) {
-            throw new IllegalArgumentException("Пользователь с таким email уже существует!");
+            throw new UserAlreadyExistsException(userRequest.getEmail());
         }
 
         User user = new User();
@@ -42,7 +44,7 @@ public class UserService {
 
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден с id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
         return convertToResponse(user);
     }
 
@@ -55,12 +57,12 @@ public class UserService {
     @Transactional
     public UserResponse updateUser(Long id, UserRequest userRequest) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден с id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         //Проверяем, что email не занят.
         if (!user.getEmail().equals(userRequest.getEmail()) &&
                 userRepository.existsByEmail(userRequest.getEmail())) {
-            throw new IllegalArgumentException("Email уже занят другим пользователем!");
+            throw new UserAlreadyExistsException(userRequest.getEmail());
         }
 
         user.setName(userRequest.getName());
@@ -74,7 +76,7 @@ public class UserService {
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден с id: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         UserEvent event = new UserEvent(user.getEmail(), "DELETE");
         kafkaProducer.sendUserEvent(event);
@@ -82,7 +84,6 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    //Переводим User в UserResponse
     private UserResponse convertToResponse(User user) {
         return new UserResponse(
                 user.getId(),

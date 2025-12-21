@@ -6,7 +6,6 @@ import org.klimtsov.dto.UserRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -231,7 +230,6 @@ class UserControllerTest {
 
     @Test
     void updateUser_WithDuplicateEmail_ReturnsBadRequest() throws Exception {
-        // Создаем первого пользователя
         UserRequest firstUser = new UserRequest();
         firstUser.setName("Первый Пользователь");
         firstUser.setEmail("first@example.com");
@@ -342,7 +340,6 @@ class UserControllerTest {
 
     @Test
     void updateUser_PartialUpdate_ReturnsUpdatedUser() throws Exception {
-        // Создаем пользователя
         UserRequest createRequest = new UserRequest();
         createRequest.setName("Иван Иванов");
         createRequest.setEmail("ivan@example.com");
@@ -358,7 +355,7 @@ class UserControllerTest {
 
         Long userId = objectMapper.readTree(createResponse).get("id").asLong();
 
-        //Обновляем только имя (не отправляем email и возраст)
+        //Обновляем только имя (не отправляем email и возраст).
         String partialUpdateJson = """
         {
             "name": "Новое Имя"
