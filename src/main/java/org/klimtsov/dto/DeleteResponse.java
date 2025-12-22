@@ -15,5 +15,5 @@ public class DeleteResponse {
     private String timestamp;
 
     @JsonProperty("_links")
-    private CollectionLinks links;
+    private DeleteLinks links;
 }

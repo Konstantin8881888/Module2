@@ -17,7 +17,7 @@ public class UsersCollectionResponse {
     private Embedded embedded;
 
     @JsonProperty("_links")
-    private CollectionLinks links;
+    private CollectionSelfCreateLinks links;
 
     @Data
     @NoArgsConstructor
@@ -31,24 +31,9 @@ public class UsersCollectionResponse {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    //Определяем схему для Link как компонент, чтобы переиспользовать.
-    @Schema(name = "Link", description = "Модель HATEOAS-ссылки")
+    @Schema(name = "Link", description = "Упрощенная модель HATEOAS-ссылки")
     public static class Link {
         @Schema(description = "URL ссылки", example = "/api/users/1")
         private String href;
-        @Schema(description = "Язык ссылки", example = "ru", nullable = true)
-        private String hreflang;
-        @Schema(description = "Заголовок ссылки", example = "Информация о пользователе", nullable = true)
-        private String title;
-        @Schema(description = "Тип медиа", example = "application/json", nullable = true)
-        private String type;
-        @Schema(description = "Признак устаревшей ссылки", nullable = true)
-        private String deprecation;
-        @Schema(description = "Профиль ссылки", nullable = true)
-        private String profile;
-        @Schema(description = "Имя ссылки", example = "self")
-        private String name;
-        @Schema(description = "Флаг шаблона URI", example = "false")
-        private Boolean templated;
     }
 }

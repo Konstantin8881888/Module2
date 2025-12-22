@@ -111,14 +111,8 @@ public class UserLinkBuilder {
         return response;
     }
 
-    public UsersCollectionResponse.Link createLink(Link springLink) {
-        UsersCollectionResponse.Link link = new UsersCollectionResponse.Link();
-        link.setHref(springLink.getHref().toString());
-        link.setTemplated(springLink.isTemplated());
-
-        link.setName(springLink.getRel().value());
-
-        return link;
+    public UsersCollectionResponse.Link createLink(org.springframework.hateoas.Link springLink) {
+        return new UsersCollectionResponse.Link(springLink.getHref().toString());
     }
 
     public UserLinks buildUserLinks(UserResponse user, boolean includeActionLinks) {
@@ -136,10 +130,6 @@ public class UserLinkBuilder {
     }
 
     public UsersCollectionResponse.Link convertToDtoLink(org.springframework.hateoas.Link springLink) {
-        UsersCollectionResponse.Link dtoLink = new UsersCollectionResponse.Link();
-        dtoLink.setHref(springLink.getHref().toString());
-        dtoLink.setTemplated(springLink.isTemplated());
-        dtoLink.setName(springLink.getRel().value());
-        return dtoLink;
+        return new UsersCollectionResponse.Link(springLink.getHref().toString());
     }
 }

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Набор HATEOAS-ссылок для коллекции")
-public class CollectionLinks {
+public class CollectionSelfCreateLinks {
     @Schema(description = "Ссылка на саму коллекцию")
     @JsonProperty("self")
     private UsersCollectionResponse.Link self;
@@ -18,8 +18,4 @@ public class CollectionLinks {
     @Schema(description = "Ссылка для создания нового элемента")
     @JsonProperty("create")
     private UsersCollectionResponse.Link create;
-
-    @Schema(description = "Ссылка на список всех элементов", required = false)
-    @JsonProperty("allUsers")
-    private UsersCollectionResponse.Link allUsers;
 }

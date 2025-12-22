@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.klimtsov.builder.UserLinkBuilder;
 import org.klimtsov.dto.*;
 import org.klimtsov.service.UserService;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/api/users")
@@ -41,7 +37,7 @@ public class UserController {
                     description = "Пользователь успешно создан",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = UserResponse.class)
+                            schema = @Schema(implementation = UserResponseWithLinks.class)
                     )
             ),
             @ApiResponse(
@@ -70,11 +66,24 @@ public class UserController {
             )
     })
     @PostMapping
-    @ResponseBody
-    public ResponseEntity<EntityModel<UserResponse>> createUser(@Valid @RequestBody UserRequest userRequest) {
+    public ResponseEntity<UserResponseWithLinks> createUser(@Valid @RequestBody UserRequest userRequest) {
         UserResponse createdUser = userService.createUser(userRequest);
-        EntityModel<UserResponse> entityModel = userLinkBuilder.toModel(createdUser, true);
-        return ResponseEntity.status(HttpStatus.CREATED).body(entityModel);
+
+        UserResponseWithLinks response = new UserResponseWithLinks();
+        response.setId(createdUser.getId());
+        response.setName(createdUser.getName());
+        response.setEmail(createdUser.getEmail());
+        response.setAge(createdUser.getAge());
+        response.setCreatedAt(createdUser.getCreatedAt());
+
+        UserLinks links = new UserLinks();
+        links.setSelf(new UsersCollectionResponse.Link("/api/users/" + createdUser.getId()));
+        links.setUpdate(new UsersCollectionResponse.Link("/api/users/" + createdUser.getId()));
+        links.setDelete(new UsersCollectionResponse.Link("/api/users/" + createdUser.getId()));
+        links.setAllUsers(new UsersCollectionResponse.Link("/api/users"));
+        response.setLinks(links);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(
@@ -108,22 +117,33 @@ public class UserController {
             )
     })
     @GetMapping
-    @ResponseBody
     public ResponseEntity<UsersCollectionResponse> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
 
         List<UserResponseWithLinks> userListWithLinks = users.stream()
-                .map(user -> userLinkBuilder.toUserResponseWithLinks(user, false))
+                .map(user -> {
+                    UserResponseWithLinks response = new UserResponseWithLinks();
+                    response.setId(user.getId());
+                    response.setName(user.getName());
+                    response.setEmail(user.getEmail());
+                    response.setAge(user.getAge());
+                    response.setCreatedAt(user.getCreatedAt());
+
+                    UserLinks links = new UserLinks();
+                    links.setSelf(new UsersCollectionResponse.Link(
+                            "/api/users/" + user.getId()));
+                    response.setLinks(links);
+
+                    return response;
+                })
                 .collect(Collectors.toList());
 
         UsersCollectionResponse.Embedded embedded =
                 new UsersCollectionResponse.Embedded(userListWithLinks);
 
-        CollectionLinks collectionLinks = new CollectionLinks();
-        collectionLinks.setSelf(userLinkBuilder.convertToDtoLink(
-                linkTo(methodOn(UserController.class).getAllUsers()).withSelfRel()));
-        collectionLinks.setCreate(userLinkBuilder.convertToDtoLink(
-                linkTo(methodOn(UserController.class).createUser(null)).withRel("create")));
+        CollectionSelfCreateLinks collectionLinks = new CollectionSelfCreateLinks();
+        collectionLinks.setSelf(new UsersCollectionResponse.Link("/api/users"));
+        collectionLinks.setCreate(new UsersCollectionResponse.Link("/api/users"));
 
         UsersCollectionResponse response = new UsersCollectionResponse(embedded, collectionLinks);
         return ResponseEntity.ok(response);
@@ -160,7 +180,6 @@ public class UserController {
             )
     })
     @GetMapping("/{id}")
-    @ResponseBody
     public ResponseEntity<UserResponseWithLinks> getUserById(@PathVariable Long id) {
         UserResponse user = userService.getUserById(id);
         UserResponseWithLinks response = userLinkBuilder.toUserResponseWithLinks(user, true);
@@ -206,7 +225,6 @@ public class UserController {
             )
     })
     @PutMapping("/{id}")
-    @ResponseBody
     public ResponseEntity<UserResponseWithLinks> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserRequest userRequest) {
@@ -249,10 +267,9 @@ public class UserController {
     public ResponseEntity<DeleteResponse> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
 
-        CollectionLinks deleteLinks = new CollectionLinks();
-        deleteLinks.setAllUsers(userLinkBuilder.convertToDtoLink(userLinkBuilder.getAllUsersLink()));
-        deleteLinks.setCreate(userLinkBuilder.convertToDtoLink(userLinkBuilder.getCreateLink()));
-
+        DeleteLinks deleteLinks = new DeleteLinks();
+        deleteLinks.setAllUsers(new UsersCollectionResponse.Link("/api/users"));
+        deleteLinks.setCreate(new UsersCollectionResponse.Link("/api/users"));
         DeleteResponse response = new DeleteResponse(
                 "Пользователь с ID " + id + " успешно удален",
                 Instant.now().toString(),
