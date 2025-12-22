@@ -111,25 +111,18 @@ public class UserLinkBuilder {
         return response;
     }
 
-    public UsersCollectionResponse.Link createLink(org.springframework.hateoas.Link springLink) {
-        return new UsersCollectionResponse.Link(springLink.getHref().toString());
-    }
-
     public UserLinks buildUserLinks(UserResponse user, boolean includeActionLinks) {
         UserLinks userLinks = new UserLinks();
 
-        userLinks.setSelf(convertToDtoLink(getUserSelfLink(user.getId())));
-        userLinks.setAllUsers(convertToDtoLink(getAllUsersLink()));
+        userLinks.setSelf("/api/users/" + user.getId());
+        userLinks.setAllUsers("/api/users");
+        userLinks.setCreate("/api/users");
 
         if (includeActionLinks) {
-            userLinks.setUpdate(convertToDtoLink(getUpdateLink(user.getId())));
-            userLinks.setDelete(convertToDtoLink(getDeleteLink(user.getId())));
+            userLinks.setUpdate("/api/users/" + user.getId());
+            userLinks.setDelete("/api/users/" + user.getId());
         }
 
         return userLinks;
-    }
-
-    public UsersCollectionResponse.Link convertToDtoLink(org.springframework.hateoas.Link springLink) {
-        return new UsersCollectionResponse.Link(springLink.getHref().toString());
     }
 }

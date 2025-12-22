@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "Набор HATEOAS-ссылок после удаления")
 public class DeleteLinks {
-    @Schema(description = "Ссылка на список всех пользователей")
+    @Schema(description = "Ссылка на список всех пользователей", example = "/api/users")
     @JsonProperty("allUsers")
-    private UsersCollectionResponse.Link allUsers;
+    private String allUsers;
 
-    @Schema(description = "Ссылка для создания нового пользователя")
+    @Schema(description = "Ссылка для создания нового пользователя", example = "/api/users")
     @JsonProperty("create")
-    private UsersCollectionResponse.Link create;
+    private String create;
 }

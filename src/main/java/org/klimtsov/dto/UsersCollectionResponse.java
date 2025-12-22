@@ -27,13 +27,4 @@ public class UsersCollectionResponse {
         @Schema(description = "Список пользователей с ссылками")
         private List<UserResponseWithLinks> userList;
     }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Schema(name = "Link", description = "Упрощенная модель HATEOAS-ссылки")
-    public static class Link {
-        @Schema(description = "URL ссылки", example = "/api/users/1")
-        private String href;
-    }
 }

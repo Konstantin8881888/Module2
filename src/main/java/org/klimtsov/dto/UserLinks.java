@@ -15,17 +15,21 @@ import lombok.NoArgsConstructor;
 public class UserLinks {
     @Schema(description = "Ссылка на самого себя", example = "/api/users/1")
     @JsonProperty("self")
-    private UsersCollectionResponse.Link self;
+    private String self;
 
     @Schema(description = "Ссылка для обновления", example = "/api/users/1")
     @JsonProperty("update")
-    private UsersCollectionResponse.Link update;
+    private String update;
 
     @Schema(description = "Ссылка для удаления", example = "/api/users/1")
     @JsonProperty("delete")
-    private UsersCollectionResponse.Link delete;
+    private String delete;
 
     @Schema(description = "Ссылка на список всех пользователей", example = "/api/users")
     @JsonProperty("allUsers")
-    private UsersCollectionResponse.Link allUsers;
+    private String allUsers;
+
+    @Schema(description = "Ссылка для создания нового пользователя", example = "/api/users")
+    @JsonProperty("create")
+    private String create;
 }

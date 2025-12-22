@@ -77,10 +77,11 @@ public class UserController {
         response.setCreatedAt(createdUser.getCreatedAt());
 
         UserLinks links = new UserLinks();
-        links.setSelf(new UsersCollectionResponse.Link("/api/users/" + createdUser.getId()));
-        links.setUpdate(new UsersCollectionResponse.Link("/api/users/" + createdUser.getId()));
-        links.setDelete(new UsersCollectionResponse.Link("/api/users/" + createdUser.getId()));
-        links.setAllUsers(new UsersCollectionResponse.Link("/api/users"));
+        links.setSelf("/api/users/" + createdUser.getId());
+        links.setUpdate("/api/users/" + createdUser.getId());
+        links.setDelete("/api/users/" + createdUser.getId());
+        links.setAllUsers("/api/users");
+        links.setCreate("/api/users");
         response.setLinks(links);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -130,8 +131,8 @@ public class UserController {
                     response.setCreatedAt(user.getCreatedAt());
 
                     UserLinks links = new UserLinks();
-                    links.setSelf(new UsersCollectionResponse.Link(
-                            "/api/users/" + user.getId()));
+                    links.setSelf("/api/users/" + user.getId());
+                    links.setCreate("/api/users");
                     response.setLinks(links);
 
                     return response;
@@ -142,8 +143,8 @@ public class UserController {
                 new UsersCollectionResponse.Embedded(userListWithLinks);
 
         CollectionSelfCreateLinks collectionLinks = new CollectionSelfCreateLinks();
-        collectionLinks.setSelf(new UsersCollectionResponse.Link("/api/users"));
-        collectionLinks.setCreate(new UsersCollectionResponse.Link("/api/users"));
+        collectionLinks.setSelf("/api/users");
+        collectionLinks.setCreate("/api/users");
 
         UsersCollectionResponse response = new UsersCollectionResponse(embedded, collectionLinks);
         return ResponseEntity.ok(response);
@@ -268,8 +269,9 @@ public class UserController {
         userService.deleteUser(id);
 
         DeleteLinks deleteLinks = new DeleteLinks();
-        deleteLinks.setAllUsers(new UsersCollectionResponse.Link("/api/users"));
-        deleteLinks.setCreate(new UsersCollectionResponse.Link("/api/users"));
+        deleteLinks.setAllUsers("/api/users");
+        deleteLinks.setCreate("/api/users");  // ✅ Добавляем create ссылку
+
         DeleteResponse response = new DeleteResponse(
                 "Пользователь с ID " + id + " успешно удален",
                 Instant.now().toString(),

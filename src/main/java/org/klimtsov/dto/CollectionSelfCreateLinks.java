@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "Набор HATEOAS-ссылок для коллекции")
 public class CollectionSelfCreateLinks {
-    @Schema(description = "Ссылка на саму коллекцию")
+    @Schema(description = "Ссылка на саму коллекцию", example = "/api/users")
     @JsonProperty("self")
-    private UsersCollectionResponse.Link self;
+    private String self;
 
-    @Schema(description = "Ссылка для создания нового элемента")
+    @Schema(description = "Ссылка для создания нового элемента", example = "/api/users")
     @JsonProperty("create")
-    private UsersCollectionResponse.Link create;
+    private String create;
 }
