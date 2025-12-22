@@ -1,6 +1,6 @@
-### Spring Boot приложение для управления пользователями с использованием Spring Data JPA, PostgreSQL и Kafka.
+### Spring Boot приложение для управления пользователями с использованием Spring Data JPA, PostgreSQL, Kafka и HATEOAS.
 
-Приложение представляет собой полноценный микросервис (user-service), реализующий REST API для выполнения базовых операций CRUD (Create, Read, Update, Delete) над сущностью User и отправляющий события о действиях в Kafka.
+Приложение представляет собой полноценный микросервис (user-service), реализующий REST API для выполнения базовых операций CRUD (Create, Read, Update, Delete) над сущностью User с полной поддержкой HATEOAS и отправляющий события о действиях в Kafka.
 
 ### Особенности:
 
@@ -13,6 +13,10 @@
 - Spring Exception Handling через @RestControllerAdvice
 - Spring Test Framework для тестирования
 - Apache Kafka - для отправки событий о создании и удалении пользователей
+- Spring HATEOAS - для реализации принципов REST Level 3 с гипермедиа ссылками
+- SpringDoc OpenAPI - для автоматической генерации документации API
+- HAL - формат ответов с встроенными ссылками
+- Паттерн DTO - для отделения API модели от сущности БД
 
 ### Основные технологии:
 
@@ -28,6 +32,8 @@
 - Testcontainers - для интеграционного тестирования с PostgreSQL
 - Mockito - для модульного тестирования
 - Maven - для управления зависимостями и сборки
+- Spring HATEOAS - для гипермедиа в REST API
+- springdoc-openapi - для документации API
 
 ---
 
@@ -47,6 +53,12 @@
 
 Приложение отправляет события в Apache Kafka при создании или удалении пользователя. Эти события потребляются вторым микросервисом (notification-service) для отправки email-уведомлений.
 
+### Особенности HATEOAS:
+- Все ответы API содержат гиперссылки на связанные ресурсы
+- Динамическое обнаружение доступных действий
+- Ссылки включают информацию о HTTP методах
+- Формат HAL для стандартизации ответов
+
 ### Отправляемые события Kafka:
 - **Топик:** `user-events`
 - **Содержимое:** email пользователя и тип операции (`CREATE` или `DELETE`)
@@ -61,10 +73,36 @@
     - Используют Testcontainers для запуска PostgreSQL в Docker
     - Тестируют весь стек приложения через MockMvc
     - Каждый тест выполняется в транзакции с автоматическим откатом
+    - Проверяют корректность работы с БД и обработку исключений
 
-2. Модульные тесты (UserServiceTest, GlobalExceptionHandlerTest)
+2. Модульные тесты (UserServiceTest, GlobalExceptionHandlerTest, UserLinkBuilderTest)
     - Используют Mockito для изоляции тестируемых компонентов
-    - Тестируют бизнес-логику и обработку исключений
+    - Тестируют бизнес-логику, обработку исключений и построение HATEOAS ссылок
+
+- Модульные тесты для UserLinkBuilder проверяют корректность генерации HATEOAS ссылок
+- Покрытие всех возможных сценариев создания ссылок
+- Проверка обработки граничных случаев (null значения)
+
+---
+
+### DTO
+
+Приложение использует паттерн DTO для разделения слоев:
+
+#### Request DTO:
+- `UserRequest` - для создания и обновления пользователей с валидацией
+
+#### Response DTO:
+- `UserResponse` - базовый ответ с данными пользователя
+- `UserResponseWithLinks` - ответ с данными и HATEOAS ссылками
+- `UsersCollectionResponse` - ответ для коллекции пользователей со вложенными данными
+- `DeleteResponse` - ответ после удаления с информационным сообщением и ссылками
+- `ErrorResponse` - стандартизированный ответ при ошибках
+
+#### Link DTO:
+- `UserLinks` - набор HATEOAS ссылок для пользователя
+- `CollectionSelfCreateLinks` - ссылки для коллекции
+- `DeleteLinks` - ссылки после удаления
 
 ---
 
@@ -105,9 +143,15 @@ Content-Type: application/json
     "name": "Иван Иванов",
     "email": "ivan@example.com",
     "age": 25,
-    "createdAt": "2024-01-15T10:30:00.000Z"
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "_links": {
+        "self": { "href": "/api/users/1" },
+        "update": { "href": "/api/users/1" },
+        "delete": { "href": "/api/users/1" },
+        "allUsers": { "href": "/api/users" },
+        "create": { "href": "/api/users" }
     }
-
+}
 ---
 
 ### 2. Получение всех пользователей (GET)
@@ -122,22 +166,36 @@ Accept: application/json
 
 **Пример ответа (200 OK):**
 
-    [
     {
-    "id": 1,
-    "name": "Иван Иванов",
-    "email": "ivan@example.com",
-    "age": 25,
-    "createdAt": "2024-01-15T10:30:00.000Z"
+    "_embedded": {
+        "userList": [
+            {
+                "id": 1,
+                "name": "Иван Иванов",
+                "email": "ivan@example.com",
+                "age": 25,
+                "createdAt": "2024-01-15T10:30:00.000Z",
+                "_links": {
+                    "self": { "href": "/api/users/1" }
+                }
+            },
+            {
+                "id": 2,
+                "name": "Мария Петрова",
+                "email": "maria@example.com",
+                "age": 30,
+                "createdAt": "2024-01-16T14:20:00.000Z",
+                "_links": {
+                    "self": { "href": "/api/users/2" }
+                }
+            }
+        ]
     },
-    {
-    "id": 2,
-    "name": "Мария Петрова",
-    "email": "maria@example.com",
-    "age": 30,
-    "createdAt": "2024-01-16T14:20:00.000Z"
+    "_links": {
+        "self": { "href": "/api/users" },
+        "create": { "href": "/api/users" }
+        }
     }
-    ]
 
 ---
 
@@ -158,7 +216,14 @@ Accept: application/json
     "name": "Иван Иванов",
     "email": "ivan@example.com",
     "age": 25,
-    "createdAt": "2024-01-15T10:30:00.000Z"
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "_links": {
+        "self": { "href": "/api/users/1" },
+        "update": { "href": "/api/users/1" },
+        "delete": { "href": "/api/users/1" },
+        "allUsers": { "href": "/api/users" },
+        "create": { "href": "/api/users" }
+        }
     }
 
 ---
@@ -186,7 +251,14 @@ Content-Type: application/json
     "name": "Иван Петров",
     "email": "ivan.p@example.com",
     "age": 26,
-    "createdAt": "2024-01-15T10:30:00.000Z"
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "_links": {
+        "self": { "href": "/api/users/1" },
+        "update": { "href": "/api/users/1" },
+        "delete": { "href": "/api/users/1" },
+        "allUsers": { "href": "/api/users" },
+        "create": { "href": "/api/users" }
+        }
     }
 
 ---
@@ -201,7 +273,14 @@ Host: localhost:8080
 
 **Пример ответа (204 No Content):**
 
-(тело ответа отсутствует)
+    {
+    "message": "Пользователь с ID 1 успешно удален",
+    "timestamp": "2024-01-17T12:00:00.000Z",
+    "_links": {
+    "allUsers": { "href": "/api/users" },
+    "create": { "href": "/api/users" }
+        }
+    }
 
 ---
 
@@ -224,9 +303,11 @@ Content-Type: application/json
 **Пример ответа (400 Bad Request):**
 
     {
-    "name": "Имя не может быть пустым",
-    "email": "Некорректный формат email",
-    "age": "Возраст должен быть до 120"
+    "message": "Ошибка валидации: {name=Имя не может быть пустым, email=Некорректный формат email, age=Возраст должен быть от 0 до 120}",
+    "timestamp": "2024-01-17T12:00:00.000Z",
+    "status": 400,
+    "error": "Bad Request",
+    "path": "/api/users"
     }
 
 ---
@@ -245,7 +326,43 @@ Accept: application/json
 **Пример ответа (400 Bad Request):**
 
     {
-    "error": "Пользователь не найден с id: 999"
+    "message": "Пользователь с ID 999 не найден",
+    "timestamp": "2024-01-17T12:00:00.000Z",
+    "status": 404,
+    "error": "Not Found",
+    "path": "/api/users/999"
     }
+
+---
+
+### Документация API
+
+Документация генерируется автоматически с использованием SpringDoc OpenAPI:
+
+- **Swagger UI:** http://localhost:8080/swagger-ui.html
+- **OpenAPI спецификация:** http://localhost:8080/api-docs
+
+Все эндпоинты документированы с описанием параметров, ответов и возможных ошибок.
+
+---
+
+### HATEOAS ссылки
+
+Приложение реализует HATEOAS Level 3. Каждый ответ содержит ссылки на доступные действия:
+
+#### Для индивидуального ресурса (/api/users/{id}):
+- **self** - ссылка на самого себя (GET)
+- **update** - ссылка для обновления (PUT)
+- **delete** - ссылка для удаления (DELETE)
+- **allUsers** - ссылка на список всех пользователей
+- **create** - ссылка для создания нового пользователя
+
+#### Для коллекции (/api/users):
+- **self** - ссылка на коллекцию
+- **create** - ссылка для создания нового элемента
+
+#### После удаления:
+- **allUsers** - ссылка на список всех пользователей
+- **create** - ссылка для создания нового пользователя
 
 ---
