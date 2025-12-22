@@ -98,6 +98,10 @@ public class UserLinkBuilder {
     }
 
     public UserResponseWithLinks toUserResponseWithLinks(UserResponse user, boolean includeActionLinks) {
+        if (user == null || user.getId() == null) {
+            throw new IllegalArgumentException("User и его ID не могут быть null");
+        }
+
         UserResponseWithLinks response = new UserResponseWithLinks();
         response.setId(user.getId());
         response.setName(user.getName());
@@ -112,6 +116,10 @@ public class UserLinkBuilder {
     }
 
     public UserLinks buildUserLinks(UserResponse user, boolean includeActionLinks) {
+        if (user == null || user.getId() == null) {
+            throw new IllegalArgumentException("User и его ID не могут быть null");
+        }
+
         UserLinks userLinks = new UserLinks();
 
         userLinks.setSelf("/api/users/" + user.getId());
