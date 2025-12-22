@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.klimtsov.dto.UserRequest;
 import org.klimtsov.dto.UserResponse;
+import org.klimtsov.exception.UserAlreadyExistsException;
+import org.klimtsov.exception.UserNotFoundException;
 import org.klimtsov.kafka.KafkaProducer;
 import org.klimtsov.repository.UserRepository;
 import org.klimtsov.userservice.model.User;
@@ -72,12 +74,12 @@ class UserServiceTest {
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        UserAlreadyExistsException exception = assertThrows(
+                UserAlreadyExistsException.class,
                 () -> userService.createUser(request)
         );
 
-        assertEquals("Пользователь с таким email уже существует!", exception.getMessage());
+        assertEquals("Пользователь с email ivan@example.com уже существует", exception.getMessage());
         verify(userRepository, never()).save(any(User.class));
         verify(kafkaProducer, never()).sendUserEvent(any());
     }
@@ -111,12 +113,12 @@ class UserServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class,
                 () -> userService.getUserById(userId)
         );
 
-        assertEquals("Пользователь не найден с id: " + userId, exception.getMessage());
+        assertEquals("Пользователь с ID 999 не найден", exception.getMessage());
         verify(userRepository, times(1)).findById(userId);
     }
 

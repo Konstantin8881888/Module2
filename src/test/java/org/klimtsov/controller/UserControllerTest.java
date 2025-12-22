@@ -80,7 +80,9 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.email").exists());
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"));
     }
 
     @Test
@@ -94,7 +96,9 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.age").exists());
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"));
     }
 
     @Test
@@ -108,7 +112,9 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.name").exists());
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"));
     }
 
     @Test
@@ -133,8 +139,9 @@ class UserControllerTest {
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondUser)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Пользователь с таким email уже существует!"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Пользователь с email duplicate@example.com уже существует"))
+                .andExpect(jsonPath("$.error").value("Conflict"));
     }
 
     @Test
@@ -162,8 +169,8 @@ class UserControllerTest {
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].name").value("Иван Иванов"))
-                .andExpect(jsonPath("$[1].name").value("Петр Петров"));
+                .andExpect(jsonPath("$._embedded.userList[0].name").value("Иван Иванов"))
+                .andExpect(jsonPath("$._embedded.userList[1].name").value("Петр Петров"));
     }
 
     @Test
@@ -193,8 +200,9 @@ class UserControllerTest {
     @Test
     void getUserById_NonExistingUser_ReturnsNotFound() throws Exception {
         mockMvc.perform(get("/api/users/999"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Пользователь не найден с id: 999"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Пользователь с ID 999 не найден"))
+                .andExpect(jsonPath("$.error").value("Not Found"));
     }
 
     @Test
@@ -263,8 +271,9 @@ class UserControllerTest {
         mockMvc.perform(put("/api/users/" + secondUserId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Email уже занят другим пользователем!"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Пользователь с email first@example.com уже существует"))
+                .andExpect(jsonPath("$.error").value("Conflict"));
     }
 
     @Test
@@ -285,14 +294,16 @@ class UserControllerTest {
         Long userId = objectMapper.readTree(createResponse).get("id").asLong();
 
         mockMvc.perform(delete("/api/users/" + userId))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
     }
 
     @Test
     void deleteUser_NonExistingUser_ReturnsBadRequest() throws Exception {
         mockMvc.perform(delete("/api/users/999"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Пользователь не найден с id: 999"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Пользователь с ID 999 не найден"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"));
     }
 
     //Проверка граничных значений.
@@ -335,7 +346,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.age").isEmpty());
+                .andExpect(jsonPath("$.age").doesNotExist());
     }
 
     @Test
@@ -401,7 +412,9 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.name").exists())
-                .andExpect(jsonPath("$.email").exists());
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").exists());
     }
 }

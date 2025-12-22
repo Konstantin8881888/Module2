@@ -2,6 +2,7 @@ package org.klimtsov.service;
 
 import org.junit.jupiter.api.Test;
 import org.klimtsov.dto.UserRequest;
+import org.klimtsov.exception.UserAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -49,7 +50,7 @@ public class DatabaseExceptionTest {
         duplicateRequest.setEmail("test-db@example.com");
         duplicateRequest.setAge(35);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(UserAlreadyExistsException.class,
                 () -> userService.createUser(duplicateRequest));
     }
 }
