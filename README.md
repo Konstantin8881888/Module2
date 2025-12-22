@@ -150,8 +150,8 @@ Content-Type: application/json
         "delete": { "href": "/api/users/1" },
         "allUsers": { "href": "/api/users" },
         "create": { "href": "/api/users" }
+        }
     }
-}
 ---
 
 ### 2. Получение всех пользователей (GET)
