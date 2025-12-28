@@ -32,7 +32,6 @@ class UserLinkBuilderWebMvcTest {
 
     @Test
     void testGeneratedLinksAreAccessible() throws Exception {
-        // Arrange
         UserResponse mockUser = new UserResponse();
         mockUser.setId(1L);
         mockUser.setName("Mock User");
@@ -60,7 +59,6 @@ class UserLinkBuilderWebMvcTest {
         when(userLinkBuilder.toUserResponseWithLinks(any(UserResponse.class), anyBoolean()))
                 .thenReturn(mockResponse);
 
-        // Act & Assert
         mockMvc.perform(get("/api/users/1")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -71,7 +69,6 @@ class UserLinkBuilderWebMvcTest {
 
     @Test
     void testLinkBuilderIntegrationWithController() throws Exception {
-        // Arrange
         UserResponse mockUser = new UserResponse();
         mockUser.setId(99L);
         mockUser.setName("Integration Test");
@@ -97,7 +94,6 @@ class UserLinkBuilderWebMvcTest {
         when(userService.getUserById(99L)).thenReturn(mockUser);
         when(userLinkBuilder.toUserResponseWithLinks(mockUser, true)).thenReturn(mockResponseWithLinks);
 
-        // Act & Assert
         mockMvc.perform(get("/api/users/99")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

@@ -12,7 +12,6 @@ import org.klimtsov.dto.*;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class UserLinkBuilderIntegrationTest {
@@ -22,10 +21,10 @@ class UserLinkBuilderIntegrationTest {
 
     @Test
     void testAllMethodsIntegration() {
-        // Создаем реальный экземпляр (не через DI, так как это тест без Spring контекста)
+        //Создаем реальный экземпляр (не через DI, так как это тест без Spring контекста).
         UserLinkBuilder userLinkBuilder = new UserLinkBuilder();
 
-        // Тестовые данные
+        //Тестовые данные/
         UserResponse user = new UserResponse();
         user.setId(100L);
         user.setName("Integration Test");
@@ -33,7 +32,7 @@ class UserLinkBuilderIntegrationTest {
         user.setAge(40);
         user.setCreatedAt(Instant.now());
 
-        // Тестируем все методы
+        //Тестируем все методы.
         EntityModel<UserResponse> modelWithActions = userLinkBuilder.toModel(user, true);
         assertNotNull(modelWithActions);
         assertTrue(modelWithActions.hasLink("self"));
@@ -52,7 +51,7 @@ class UserLinkBuilderIntegrationTest {
         assertNotNull(collectionModel);
         assertTrue(collectionModel.hasLink("self"));
 
-        // Тестируем методы получения отдельных ссылок
+        //Тестируем методы получения отдельных ссылок.
         Link selfLink = userLinkBuilder.getUserSelfLink(100L);
         assertNotNull(selfLink);
         assertEquals("self", selfLink.getRel().value());
@@ -73,7 +72,7 @@ class UserLinkBuilderIntegrationTest {
         assertNotNull(createLink);
         assertEquals("create-user", createLink.getRel().value());
 
-        // Тестируем DTO методы
+        //Тестируем DTO методы.
         UserResponseWithLinks responseWithLinks = userLinkBuilder.toUserResponseWithLinks(user, true);
         assertNotNull(responseWithLinks);
         assertEquals(100L, responseWithLinks.getId());
@@ -97,7 +96,7 @@ class UserLinkBuilderIntegrationTest {
     void testNullSafety() {
         UserLinkBuilder userLinkBuilder = new UserLinkBuilder();
 
-        // Проверяем, что методы корректно обрабатывают null
+        //Проверяем, что методы корректно обрабатывают null.
         assertThrows(IllegalArgumentException.class, () ->
                 userLinkBuilder.toModel(null, true));
 
@@ -110,7 +109,7 @@ class UserLinkBuilderIntegrationTest {
         assertThrows(IllegalArgumentException.class, () ->
                 userLinkBuilder.buildUserLinks(null, true));
 
-        // Проверяем пользователя с null ID
+        //Проверяем пользователя с null ID.
         UserResponse userWithNullId = new UserResponse();
         userWithNullId.setId(null);
         userWithNullId.setName("Test");

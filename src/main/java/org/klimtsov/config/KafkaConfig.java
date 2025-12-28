@@ -24,7 +24,7 @@ public class KafkaConfig {
     public NewTopic userEventsTopic() {
         return TopicBuilder.name("user-events")
                 .partitions(1)  //1 партиция (для простоты).
-                .replicas(1)    //1 реплика
+                .replicas(1)    //1 реплика.
                 .build();
     }
 }
