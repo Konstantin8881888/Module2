@@ -19,7 +19,11 @@ import org.testcontainers.utility.DockerImageName;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "eureka.client.enabled=false",
+        "spring.cloud.config.enabled=false",
+        "spring.cloud.discovery.enabled=false"
+})
 @AutoConfigureMockMvc
 @Testcontainers
 @Transactional //Все тесты выполняются в транзакции и откатываются автоматически.
