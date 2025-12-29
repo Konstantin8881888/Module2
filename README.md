@@ -87,7 +87,7 @@
 
 ### Файлы конфигурации:
 - `bootstrap.yml` - минимальная конфигурация для подключения к Config Server и Eureka
-- Тестовые настройки остаются в `src/test/resources/application.properties`
+- Тестовые настройки остаются в `src/test/resources/application.yml`
 
 ---
 
