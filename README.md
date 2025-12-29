@@ -2,6 +2,19 @@
 
 Приложение представляет собой полноценный микросервис (user-service), реализующий REST API для выполнения базовых операций CRUD (Create, Read, Update, Delete) над сущностью User с полной поддержкой HATEOAS и отправляющий события о действиях в Kafka.
 
+### Архитектура Spring Cloud
+
+Сервис интегрирован в Spring Cloud со следующими особенностями:
+
+- **Service Discovery**: Регистрация в Eureka Server (порт 8761)
+- **External Configuration**: Получение настроек из Config Server (порт 8888)
+- **API Gateway**: Доступ через единую точку входа (порт 8080)
+- **Circuit Breaker**: Защита через Resilience4j в Gateway
+
+**Порты:**
+- Сервис напрямую: `http://localhost:8081`
+- Через Gateway: `http://localhost:8080/api/users/*`
+
 ### Особенности:
 
 - Spring Boot Auto-Configuration - автоматическая настройка компонентов
@@ -34,6 +47,8 @@
 - Maven - для управления зависимостями и сборки
 - Spring HATEOAS - для гипермедиа в REST API
 - springdoc-openapi - для документации API
+- Spring Cloud Config Client - для получения конфигурации из центрального сервера
+- Spring Cloud Netflix Eureka Client - для регистрации в сервисе обнаружения
 
 ---
 
@@ -62,6 +77,17 @@
 ### Отправляемые события Kafka:
 - **Топик:** `user-events`
 - **Содержимое:** email пользователя и тип операции (`CREATE` или `DELETE`)
+
+### Интеграция с Spring Cloud:
+
+- **Config Server**: Все настройки хранятся централизованно в `config-server`
+- **Eureka Server**: Автоматическая регистрация и обнаружение сервисов
+- **API Gateway**: Единая точка входа для всех запросов к API
+- **Circuit Breaker**: Автоматическое переключение на fallback при недоступности сервиса
+
+### Файлы конфигурации:
+- `bootstrap.yml` - минимальная конфигурация для подключения к Config Server и Eureka
+- Тестовые настройки остаются в `src/test/resources/application.properties`
 
 ---
 
@@ -126,7 +152,9 @@
 
 POST /api/users
 
-Host: localhost:8080
+Host: localhost:8081  (прямой доступ)
+
+Или через Gateway: http://localhost:8080/api/users
 
 Content-Type: application/json
 
@@ -160,7 +188,9 @@ Content-Type: application/json
 
 GET /api/users
 
-Host: localhost:8080
+Host: localhost:8081  (прямой доступ)
+
+Или через Gateway: http://localhost:8080/api/users
 
 Accept: application/json
 
@@ -205,7 +235,9 @@ Accept: application/json
 
 GET /api/users/1
 
-Host: localhost:8080
+Host: localhost:8081  (прямой доступ)
+
+Или через Gateway: http://localhost:8080/api/users
 
 Accept: application/json
 
@@ -234,7 +266,9 @@ Accept: application/json
 
 PUT /api/users/1
 
-Host: localhost:8080
+Host: localhost:8081  (прямой доступ)
+
+Или через Gateway: http://localhost:8080/api/users
 
 Content-Type: application/json
 
@@ -269,7 +303,9 @@ Content-Type: application/json
 
 DELETE /api/users/1
 
-Host: localhost:8080
+Host: localhost:8081  (прямой доступ)
+
+Или через Gateway: http://localhost:8080/api/users
 
 **Пример ответа (204 No Content):**
 
@@ -290,7 +326,9 @@ Host: localhost:8080
 
 POST /api/users
 
-Host: localhost:8080
+Host: localhost:8081  (прямой доступ)
+
+Или через Gateway: http://localhost:8080/api/users
 
 Content-Type: application/json
 
@@ -319,7 +357,9 @@ Content-Type: application/json
 
 GET /api/users/999
 
-Host: localhost:8080
+Host: localhost:8081  (прямой доступ)
+
+Или через Gateway: http://localhost:8080/api/users
 
 Accept: application/json
 
@@ -337,10 +377,12 @@ Accept: application/json
 
 ### Документация API
 
-Документация генерируется автоматически с использованием SpringDoc OpenAPI:
+Документация генерируется автоматически с использованием SpringDoc OpenAPI.
 
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
-- **OpenAPI спецификация:** http://localhost:8080/api-docs
+### Доступные URL:
+- **Через Gateway**: http://localhost:8080/swagger-ui.html
+- **Прямой доступ**: http://localhost:8081/swagger-ui.html
+- **OpenAPI спецификация**: http://localhost:8081/api-docs
 
 Все эндпоинты документированы с описанием параметров, ответов и возможных ошибок.
 
@@ -364,5 +406,18 @@ Accept: application/json
 #### После удаления:
 - **allUsers** - ссылка на список всех пользователей
 - **create** - ссылка для создания нового пользователя
+
+---
+
+### Порядок запуска системы:
+1. **Eureka Server** (порт 8761): `cd eureka-server && mvn spring-boot:run`
+2. **Config Server** (порт 8888): `cd config-server && mvn spring-boot:run`
+3. **User Service** (порт 8081): `cd Module2 && mvn spring-boot:run`
+4. **API Gateway** (порт 8080): `cd api-gateway && mvn spring-boot:run`
+
+### Проверка работоспособности:
+1. Проверьте Eureka Dashboard: http://localhost:8761
+2. Убедитесь, что USER-SERVICE зарегистрирован
+3. Проверьте API через Gateway: http://localhost:8080/api/users
 
 ---
