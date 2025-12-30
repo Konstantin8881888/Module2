@@ -1,13 +1,14 @@
 server:
   port: 8080
 
-#Тестовая БД (Testcontainers).
+#Тестовая конфигурация (отключаем облачные компоненты).
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/user_service_test
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -17,11 +18,14 @@ spring:
         format_sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
+
   kafka:
     bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  #Отключаем Config Server для тестов.
   cloud:
     config:
       enabled: false
@@ -31,7 +35,7 @@ eureka:
   client:
     enabled: false
 
-#Swagger отключаем в тестах.
+#Отключаем Swagger в тестах.
 springdoc:
   api-docs:
     enabled: false
